@@ -967,6 +967,7 @@ async function createWorkspaceChatAgent(input: CreateChatAgentInput): Promise<Su
   });
   const images = await encodeImages(wirePayload.images);
   let navigated = false;
+  let creationSnapshot: CreationSnapshot | undefined;
   let outcome: SubmitOutcome = "background";
   const initialAgent: NonNullable<CreateWorkspaceRequestOptions["agent"]> = {
     config: {
@@ -990,6 +991,7 @@ async function createWorkspaceChatAgent(input: CreateChatAgentInput): Promise<Su
       withInitialAgent: true,
       agent: requestedAgent,
       onEvent: (snapshot) => {
+        creationSnapshot = snapshot;
         if (!snapshot.workspace || navigated) return;
         navigated = true;
         if (!input.isStillOnCreateScreen()) return;
@@ -1029,15 +1031,30 @@ async function createWorkspaceChatAgent(input: CreateChatAgentInput): Promise<Su
   };
   const agentCreation = {
     result: Promise.resolve().then(() => execute()),
-    retry: (request: CreateAgentRequestOptions) =>
-      execute({
+    retry: (request: CreateAgentRequestOptions) => {
+      const canRetryAgent =
+        creationSnapshot?.phase === "failed" &&
+        creationSnapshot.failedStage === "agent" &&
+        !creationSnapshot.outcomeUnknown;
+      if (canRetryAgent) {
+        // Workspace provisioning succeeded; an edited draft is a new agent intent.
+        return input.resolveClient().createAgent({
+          ...request,
+          idempotencyKey: generateDraftId(),
+          onEvent: (snapshot) => {
+            creationSnapshot = snapshot;
+          },
+        });
+      }
+      return execute({
         ...initialAgent,
         config: { ...request.config!, cwd },
         initialPrompt: request.initialPrompt ?? "",
         clientMessageId: initialAgent.clientMessageId,
         images: request.images,
         attachments: request.attachments,
-      }),
+      });
+    },
   };
   await agentCreation.result;
   if (outcome === "background") clearConsumedDraft();

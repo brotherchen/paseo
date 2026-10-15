@@ -2248,7 +2248,9 @@ export class ACPAgentSession implements AgentSession, ACPClient {
       return;
     }
 
+    // Config selection returns the new model's option IDs; the legacy RPC does not.
     if (
+      !selection.configChoice &&
       selection.availableModel &&
       typeof this.connection.unstable_setSessionModel === "function"
     ) {
@@ -2300,6 +2302,7 @@ export class ACPAgentSession implements AgentSession, ACPClient {
       requestedValue: modelId,
       label: "model",
     });
+    this.thinkingOptionId = deriveCurrentConfigValue(this.configOptions, "thought_level");
     this.pushEvent({
       type: "model_changed",
       provider: this.provider,

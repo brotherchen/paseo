@@ -198,6 +198,7 @@ function createSessionWithConfig(
     provider?: string;
     modeId?: string | null;
     model?: string | null;
+    thinkingOptionId?: string;
     featureValues?: Record<string, unknown>;
   } = {},
   logger: ReturnType<typeof createTestLogger> = createTestLogger(),
@@ -209,6 +210,7 @@ function createSessionWithConfig(
       cwd: "/tmp/paseo-acp-test",
       modeId: config.modeId ?? undefined,
       model: config.model ?? undefined,
+      thinkingOptionId: config.thinkingOptionId,
       featureValues: config.featureValues,
     },
     {
@@ -421,9 +423,11 @@ function prepareConfiguredOverrideSession(
 } {
   const setSessionMode = vi.fn(async () => undefined);
   const unstableSetSessionModel = vi.fn(async () => undefined);
-  const setSessionConfigOption = vi.fn(async () => ({
-    configOptions: options.configOptions ?? [],
-  }));
+  const setSessionConfigOption = vi.fn(
+    async (_input: { sessionId: string; configId: string; value: string }) => ({
+      configOptions: options.configOptions ?? [],
+    }),
+  );
   const internals = asInternals<ACPConfiguredOverrideInternals>(session);
   internals.sessionId = "session-1";
   internals.connection = {
@@ -1143,6 +1147,53 @@ describe("ACPAgentSession Zed parity", () => {
       expect.objectContaining({ featureId: "fast", err: expect.any(Error) }),
       "cursor cannot apply ACP feature 'fast' to the current model; using the provider default",
     );
+  });
+
+  test("refreshes model config options before applying thinking on a model switch", async () => {
+    const session = createSessionWithConfig({ model: "opus", thinkingOptionId: "high" });
+    const modelOption = selectConfigOption("model", ["kimi", "opus"], "kimi");
+    const previousThinking = {
+      ...selectConfigOption("thought_level", ["low", "high"], "low"),
+      id: "reasoning",
+    };
+    const nextThinking = { ...previousThinking, id: "effort" };
+    const { internals, setSessionConfigOption, unstableSetSessionModel } =
+      prepareConfiguredOverrideSession(session, {
+        currentModel: "kimi",
+        availableModels: [
+          { modelId: "kimi", name: "Kimi" },
+          { modelId: "opus", name: "Opus" },
+        ],
+        configOptions: [modelOption, previousThinking],
+      });
+    setSessionConfigOption.mockImplementation(
+      async (request: { configId: string; value: string }) => {
+        if (request.configId === "reasoning")
+          throw new Error("Unknown model config option: reasoning");
+        return {
+          configOptions: [
+            { ...modelOption, currentValue: "opus" },
+            {
+              ...nextThinking,
+              currentValue: request.configId === "effort" ? request.value : "low",
+            },
+          ],
+        };
+      },
+    );
+
+    await session.setThinkingOption(null);
+    await internals.applyConfiguredOverrides();
+
+    expect(unstableSetSessionModel).not.toHaveBeenCalled();
+    expect(setSessionConfigOption.mock.calls).toEqual([
+      [{ sessionId: "session-1", configId: modelOption.id, value: "opus" }],
+      [{ sessionId: "session-1", configId: "effort", value: "high" }],
+    ]);
+    await expect(session.getRuntimeInfo()).resolves.toMatchObject({
+      model: "opus",
+      thinkingOptionId: "high",
+    });
   });
 
   test("routes config_option_update and refreshes derived mode, model, and thinking state", async () => {
