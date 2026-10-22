@@ -353,6 +353,10 @@ export class ProviderSnapshotManager {
     return this.generation.definitions[provider]?.runtimeSettings;
   }
 
+  supportsConfigRequiredProvider(provider: AgentProvider): boolean {
+    return this.pluginProviders.definitions()[provider]?.requiresConfiguration === true;
+  }
+
   getProviderLabel(provider: AgentProvider): string {
     return this.generation.definitions[provider]?.label ?? provider;
   }

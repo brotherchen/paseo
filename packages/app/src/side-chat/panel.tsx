@@ -1,9 +1,10 @@
 import { useCallback, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { MessageCircleQuestionMark, X } from "lucide-react-native";
 
+import { ToolbarButton } from "@/components/ui/pane-content-toolbar";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { useHostRuntimeClient } from "@/runtime/host-runtime";
 import type { Theme } from "@/styles/theme";
@@ -64,16 +65,15 @@ export function SideChatOverlay({
       <View style={styles.header}>
         <ThemedMessageCircleQuestionMark size={14} uniProps={mutedColorMapping} />
         <Text style={styles.title}>{t("agentPanel.sideChat.title")}</Text>
-        <Pressable
+        <ToolbarButton
           onPress={handleClose}
           hitSlop={8}
           style={styles.closeButton}
           testID="agent-side-chat-close"
-          accessibilityRole="button"
-          accessibilityLabel={t("common.actions.close")}
+          label={t("common.actions.close")}
         >
           <ThemedX size={14} uniProps={mutedColorMapping} />
-        </Pressable>
+        </ToolbarButton>
       </View>
       <SideChatContent serverId={serverId} parentAgentId={agentId} renderAgent={renderAgent} />
     </View>

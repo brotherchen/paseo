@@ -12,6 +12,7 @@ import type {
   TerminalLocalFileLinkTarget,
 } from "../terminal/local-links/terminal-local-link-provider";
 import type { TerminalClipboardWriter } from "../terminal/native-renderer/terminal-selection";
+import type { TerminalFile } from "../terminal/file-paste";
 import type { PendingTerminalModifiers } from "../utils/terminal-keys";
 import type { TerminalRendererReadyChange } from "../utils/terminal-renderer-readiness";
 import type { TerminalPastedImage } from "../terminal/runtime/terminal-image-paste";
@@ -78,4 +79,5 @@ export interface TerminalEmulatorProps {
   pendingModifiers?: PendingTerminalModifiers;
   focusRequestToken?: number;
   resizeRequestToken?: number;
+  onFilePaste?: (file: Promise<TerminalFile | null>) => void;
 }

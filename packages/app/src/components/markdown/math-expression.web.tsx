@@ -27,7 +27,7 @@ export const MathExpression = memo(function MathExpression({
     () => ({ ...(display ? blockStyle : inlineStyle), color }),
     [color, display],
   );
-  const Element = display ? "div" : "span";
+  const Element = "span";
 
   return (
     <Element

@@ -82,3 +82,10 @@ shared-database contract and version pins are documented in
 Depends on [persistent-terminal-sessions.md](persistent-terminal-sessions.md)
 for the PTY substrate. Do not auto-kill a linked conversation PTY just
 because an Agent tab gains focus — that PTY _is_ the TUI view.
+
+## October 23 upstream integration
+
+Desktop keeps the dedicated header switch. The compact workspace menu carries
+the same Agent/TUI action after the upstream header redesign. Terminal restore
+and passive mobile size ownership remain independent of the upstream file-paste
+implementation and native-grid renderer.

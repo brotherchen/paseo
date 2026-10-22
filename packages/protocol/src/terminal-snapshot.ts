@@ -100,7 +100,7 @@ function renderTerminalRow(row: TerminalCell[], padToCols?: number): string {
 
   for (let index = 0; index < length; index += 1) {
     const cell = row[index] ?? { char: " " };
-    if (cell.width === 0) {
+    if (cell.width === 0 || cell.char === "") {
       continue;
     }
     // COMPAT(terminalCellWidth): added in the custom fork on 2026-08-13, remove after 2027-02-13 once persistent worker floor includes cell widths.

@@ -191,3 +191,11 @@ Use test-only Node 22+ for the browser harness. Real-provider credentials belong
 in a private E2E home outside the repository, never in fixtures or committed config.
 The browser regression covers history-first entry, selection, close/reopen,
 refresh, continued native context, and explicit-only creation of another chat.
+
+## October 23 upstream integration
+
+The compact workspace menu exposes Side Chat after the upstream header redesign.
+Side conversations remain persistent internal agents: upstream's ephemeral
+internal-agent archival path must exclude them, and parent archival cascades
+through their dedicated ownership label. History rows and close actions use the
+shared press-feedback components.

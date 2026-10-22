@@ -3,6 +3,7 @@ import { Pressable, Text, type PressableStateCallbackType } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
 export interface TerminalPasteActionProps {
+  /** Clipboard holds text or an image, so a paste attempt can do something. */
   hasClipboardContent: boolean;
   onPaste: () => void;
 }

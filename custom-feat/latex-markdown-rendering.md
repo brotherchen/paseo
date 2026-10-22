@@ -15,17 +15,16 @@ colors under the dark / Pure Black themes.
 
 ## Design
 
-- Parsing: `markdown-it-texmath` is added to the Markdown pipeline, with a
-  fork-owned guard layer (`math-parser.ts`) that rejects currency-like and
-  inline-code false positives before treating a span as math.
-- Rendering: KaTeX generates **self-contained MathML** (no KaTeX stylesheet
-  needed), emitted through dedicated components under
-  `packages/app/src/components/markdown/math-expression*`.
-- Theming: formula roots and nested `<math>` elements inherit the
-  surrounding Markdown text color instead of KaTeX defaults, so formulas
-  stay readable on Pure Black.
-- All delimiter styles above are supported; shared and assistant-specific
-  Markdown paths both go through the same math plugin.
+- The shared enriched Markdown renderer remains the only prose renderer.
+  `math-source.ts` adapts dollar and bracket math to private render links on
+  web, excluding code, authored links, images, and raw HTML using source ranges.
+- The web link renderer recognizes those links and uses the existing
+  `MathExpression` component. KaTeX produces self-contained MathML and the
+  current theme supplies the surrounding foreground color.
+- `markdown-it-texmath` remains in the clipboard parser; its render output uses
+  the same MathML settings. Native keeps the original delimited source.
+- Tests cover code/currency preservation, both delimiters, and browser theme
+  inheritance through the actual enriched renderer.
 
 ### Known limitation
 

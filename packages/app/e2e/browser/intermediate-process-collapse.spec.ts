@@ -72,11 +72,11 @@ test("renders the assistant boundary as one compact Markdown block", async ({ pa
     await expectAgentIdle(page, 30_000);
 
     const assistantMessage = page.getByTestId("assistant-message").last();
-    const boundary = assistantMessage.locator('[data-paseo-markdown-tag="hr"]');
+    const boundary = assistantMessage.locator("hr");
     await expect(assistantMessage.locator(":scope > *")).toHaveCount(1);
     await expect(boundary).toBeVisible();
-    await expect(boundary).toHaveCSS("background-color", "rgb(113, 113, 122)");
-    await expect(boundary).toHaveCSS("height", "1px");
+    await expect(boundary).toHaveCSS("border-top-color", "rgb(113, 113, 122)");
+    await expect(boundary).toHaveCSS("border-top-width", "1px");
     await expect(boundary).toHaveCSS("margin-top", "8px");
     await expect(boundary).toHaveCSS("margin-bottom", "8px");
     await expect(assistantMessage).toContainText("Final answer");

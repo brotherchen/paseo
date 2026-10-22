@@ -21,3 +21,12 @@ direct messages between agents did not.
   text, including slash commands. Existing envelopes are not nested.
 - This only controls the input message's visibility. Assistant replies remain
   visible, and native provider transcripts retain the injected context.
+
+## October 23 upstream integration
+
+Upstream now owns structured agent-message provenance and batched delivery.
+Cross-agent prompts use its versioned envelope and source metadata; provider
+history remains authoritative and user-message projection hides internal context.
+Self-directed goal commands retain immediate out-of-band dispatch without a
+finish-notification subscription. The older manually prepended sender envelope
+is no longer produced by the fork.

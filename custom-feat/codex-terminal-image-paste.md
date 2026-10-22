@@ -1,6 +1,6 @@
 # Clipboard image paste in Codex terminals
 
-- Status: active
+- Status: absorbed by upstream
 - Commits: `a3132bb37`
 - Ledger entry: "Clipboard image paste in Codex terminals"
 
@@ -13,7 +13,19 @@ image straight into a Codex conversation terminal from desktop, and from a
 phone via the terminal Paste button, with the image ending up as a native
 Codex attachment.
 
-## Design
+## Current implementation
+
+Upstream `9d908d678` supplies shared terminal file and image paste on web,
+Electron, and native clients. The October 23 merge adopts that implementation,
+including its serialized upload queue, progress/error feedback, host-side upload,
+and bracketed paste. It supports ordinary agent TUIs as well as linked Codex
+conversation terminals.
+
+The old optional `codexTerminalImagePaste` and per-terminal `imagePaste` fields
+remain accepted for wire compatibility. They no longer gate the current client.
+The fork still owns Agent/TUI conversation handoff and terminal persistence.
+
+## Original design
 
 - Capture: the desktop/Electron terminal intercepts clipboard **raster
   image** items on paste (same items as the composer). The native/mobile

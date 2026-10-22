@@ -1,9 +1,10 @@
 import { useCallback, type ReactNode } from "react";
 import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
+import { PressHighlight } from "@/components/ui/press-highlight";
 import { Button } from "@/components/ui/button";
 import { useFetchQuery } from "@/data/query";
 import { useHostRuntimeClient, useHostRuntimeIsConnected } from "@/runtime/host-runtime";
@@ -26,7 +27,7 @@ function SideChatHistoryRow({
 }) {
   const handleOpen = useCallback(() => onOpen(chat.sideAgentId), [onOpen, chat.sideAgentId]);
   return (
-    <Pressable
+    <PressHighlight
       style={styles.row}
       onPress={handleOpen}
       disabled={disabled}
@@ -40,7 +41,7 @@ function SideChatHistoryRow({
       <Text style={styles.metadata} numberOfLines={1}>
         {chat.sideAgentId}
       </Text>
-    </Pressable>
+    </PressHighlight>
   );
 }
 

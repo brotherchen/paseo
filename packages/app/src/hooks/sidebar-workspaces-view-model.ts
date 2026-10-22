@@ -1,3 +1,4 @@
+import equal from "fast-deep-equal";
 import type { PrHint } from "@/git/pr-hint";
 import { selectPrHintFromStatus } from "@/git/pr-hint";
 import { type HostProjectListItem } from "@/projects/host-project-model";
@@ -27,6 +28,7 @@ export interface SidebarWorkspacePlacement {
   workspaceDirectory?: string;
   projectKind: WorkspaceStructureProject["projectKind"];
   workspaceKind: WorkspaceDescriptor["workspaceKind"];
+  background?: boolean;
   name: string;
 }
 
@@ -164,6 +166,7 @@ export function createSidebarWorkspaceEntry(input: {
       input.workspace.worktreeSlug ?? shortenPath(input.workspace.workspaceDirectory),
     projectKind: input.workspace.projectKind,
     workspaceKind: input.workspace.workspaceKind,
+    background: input.workspace.background,
     name: input.workspace.name,
     title: input.workspace.title ?? null,
     pinnedAt: input.workspace.pinnedAt,
@@ -285,6 +288,34 @@ export function deriveProjectStatusBucket(input: {
   return aggregateSidebarStateBuckets(buckets);
 }
 
+/** One bounded projection per sidebar; unchanged placements survive project reordering. */
+export function createSidebarWorkspacePlacementSelector(): (
+  projects: readonly HostProjectListItem[],
+) => SidebarWorkspacePlacementModel {
+  let previous: SidebarWorkspacePlacementModel | null = null;
+  return (projects) => {
+    const next = buildSidebarWorkspacePlacementModel({ projects });
+    const previousProjects = new Map(
+      previous?.projects.map((project) => [project.viewKey, project]),
+    );
+    const previousWorkspaces = new Map(
+      previous?.workspaces.map((workspace) => [workspace.workspaceKey, workspace]),
+    );
+    next.projects = next.projects.map((project) => {
+      const prior = previousProjects.get(project.viewKey);
+      if (prior && equal(prior, project)) return prior;
+      project.workspaces = project.workspaces.map((workspace) => {
+        const priorWorkspace = previousWorkspaces.get(workspace.workspaceKey);
+        return priorWorkspace && equal(priorWorkspace, workspace) ? priorWorkspace : workspace;
+      });
+      return project;
+    });
+    next.workspaces = next.projects.flatMap((project) => project.workspaces);
+    previous = next;
+    return next;
+  };
+}
+
 export function buildSidebarWorkspacePlacementModel(input: {
   projects: readonly HostProjectListItem[];
 }): SidebarWorkspacePlacementModel {
@@ -367,13 +398,15 @@ export function buildSidebarWorkspaceEntries(input: {
   sessions: SidebarWorkspaceSession[];
   pendingCreateAttempts?: Record<string, PendingCreateAttempt>;
   previousEntries?: ReadonlyMap<string, SidebarWorkspaceEntry>;
-}): Map<string, SidebarWorkspaceEntry> {
+}): ReadonlyMap<string, SidebarWorkspaceEntry> {
   if (input.placements.length === 0 || input.sessions.length === 0) {
     return new Map();
   }
 
   const sessionByServerId = new Map(input.sessions.map((session) => [session.serverId, session]));
   const entries = new Map<string, SidebarWorkspaceEntry>();
+  const previousKeys = input.previousEntries?.keys();
+  let unchanged = input.previousEntries !== undefined;
 
   for (const placement of input.placements) {
     const session = sessionByServerId.get(placement.serverId);
@@ -393,15 +426,22 @@ export function buildSidebarWorkspaceEntries(input: {
       workspaceAgentActivity: session.workspaceAgentActivity,
     });
     const previousEntry = input.previousEntries?.get(placement.workspaceKey);
-    entries.set(
-      placement.workspaceKey,
+    const nextEntry =
       previousEntry && areSidebarWorkspaceEntriesEqual(previousEntry, entry)
         ? previousEntry
-        : entry,
-    );
+        : entry;
+    entries.set(placement.workspaceKey, nextEntry);
+    unchanged =
+      previousKeys?.next().value === placement.workspaceKey &&
+      previousEntry === nextEntry &&
+      unchanged;
   }
 
-  return entries;
+  // Resuming a retained sidebar must not invalidate its project/filter projections
+  // when the directory has not changed while it was hidden.
+  return unchanged && input.previousEntries?.size === entries.size
+    ? input.previousEntries
+    : entries;
 }
 
 function areSidebarWorkspaceEntriesEqual(
@@ -544,56 +584,21 @@ export function appendMissingOrderKeys(input: {
   return [...input.currentOrder, ...missingKeys];
 }
 
-export function prependMissingOrderKeys(input: {
-  currentOrder: string[];
-  visibleKeys: string[];
-}): string[] {
-  if (input.visibleKeys.length === 0) {
-    return input.currentOrder;
-  }
-
-  const existingKeys = new Set(input.currentOrder);
-  const missingKeys = input.visibleKeys.filter((key) => !existingKeys.has(key));
-  if (missingKeys.length === 0) {
-    return input.currentOrder;
-  }
-
-  return [...missingKeys, ...input.currentOrder];
-}
-
 export interface SidebarOrderUpdates {
   projectOrder: string[] | null;
-  workspaceOrders: Array<{ projectViewKey: string; order: string[] }>;
 }
 
 export function computeSidebarOrderUpdates(input: {
   projects: SidebarProjectEntry[];
   persistedProjectOrder: string[];
-  getWorkspaceOrder: (projectViewKey: string) => string[];
 }): SidebarOrderUpdates {
-  if (input.projects.length === 0) {
-    return { projectOrder: null, workspaceOrders: [] };
-  }
-
   const nextProjectOrder = appendMissingOrderKeys({
     currentOrder: input.persistedProjectOrder,
     visibleKeys: input.projects.map((project) => project.viewKey),
   });
-  const projectOrder = nextProjectOrder === input.persistedProjectOrder ? null : nextProjectOrder;
-
-  const workspaceOrders: Array<{ projectViewKey: string; order: string[] }> = [];
-  for (const project of input.projects) {
-    const persistedWorkspaceOrder = input.getWorkspaceOrder(project.viewKey);
-    const nextWorkspaceOrder = prependMissingOrderKeys({
-      currentOrder: persistedWorkspaceOrder,
-      visibleKeys: project.workspaces.map((workspace) => workspace.workspaceKey),
-    });
-    if (nextWorkspaceOrder !== persistedWorkspaceOrder) {
-      workspaceOrders.push({ projectViewKey: project.viewKey, order: nextWorkspaceOrder });
-    }
-  }
-
-  return { projectOrder, workspaceOrders };
+  return {
+    projectOrder: nextProjectOrder === input.persistedProjectOrder ? null : nextProjectOrder,
+  };
 }
 
 export interface SidebarLoadingState {

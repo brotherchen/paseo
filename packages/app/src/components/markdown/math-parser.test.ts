@@ -1,6 +1,7 @@
 import MarkdownIt from "markdown-it";
 import { describe, expect, it } from "vitest";
 import { enableMarkdownMath } from "./math-parser";
+import { prepareMathSource, parseMathLink } from "./math-source";
 import { renderMathToMarkup } from "./math-rendering";
 
 function tokenTypes(source: string): string[] {
@@ -27,5 +28,23 @@ describe("markdown math", () => {
     expect(markup).toContain("<math");
     expect(markup).toContain("<msup>");
     expect(markup).not.toContain("<link");
+  });
+});
+
+describe("math source adaptation", () => {
+  it("adapts both delimiters while retaining expression content", () => {
+    const source = prepareMathSource("Inline $x^2$ and \\(y^2\\)\n\n\\[\\sum_i i\\]");
+    const links = [...source.matchAll(/\[math\]\((paseo-math:[^)]+)\)/g)];
+    expect(links.map((link) => parseMathLink(link[1]))).toEqual([
+      { expression: "x^2", display: false },
+      { expression: "y^2", display: false },
+      { expression: "\\sum_i i", display: true },
+    ]);
+  });
+
+  it("preserves code, links, escaped dollars, and currency", () => {
+    const source =
+      "Price $5 and $6. ` $x$ `\n\n```tex\n\\[x\\]\n```\n\n[link $x$](https://example.com) and \\$x$";
+    expect(prepareMathSource(source)).toBe(source);
   });
 });
