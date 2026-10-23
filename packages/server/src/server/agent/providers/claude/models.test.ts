@@ -642,6 +642,16 @@ describe("normalizeClaudeRuntimeModelId", () => {
     expect(normalizeClaudeRuntimeModelId("us.anthropic.claude-opus-4-8-20260101")).toBe(
       "claude-opus-4-8",
     );
+    expect(normalizeClaudeRuntimeModelId("us.anthropic.claude-opus-5-20260724")).toBe(
+      "claude-opus-5",
+    );
+  });
+
+  it("does not collapse an unknown minor version into its major-only entry", () => {
+    expect(normalizeClaudeRuntimeModelId("claude-opus-5-6")).toBeNull();
+    expect(normalizeClaudeRuntimeModelId("claude-opus-5-6[1m]")).toBeNull();
+    expect(normalizeClaudeRuntimeModelId("us.anthropic.claude-opus-5-6-20260101")).toBeNull();
+    expect(findClaudeModel("claude-opus-5-6")).toBeUndefined();
   });
 
   it("does not collapse a prefixed minor release onto the major it extends", () => {
