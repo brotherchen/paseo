@@ -65,6 +65,7 @@ function renderQuotaRefresh(section,reports){
    const block=element('div','quota-refresh','');
    const top=element('div','control-top','');top.append(element('strong','','数据源 · '+report.hostLabel));
    const refresh=element('button','','刷新额度');refresh.addEventListener('click',()=>act({kind:'refresh',hostId:report.hostId},refresh));top.append(refresh);block.append(top);
+   if(report.state==='unavailable')block.append(element('p','control-help','额度暂不可用，请检查主机上的 Magpie 服务后刷新。'));
    if(report.issue)block.append(element('p','control-help',report.issue));
    section.append(block);
  }

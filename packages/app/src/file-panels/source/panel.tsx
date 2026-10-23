@@ -81,12 +81,12 @@ export function TextFilePanel(props: TextFilePanelProps) {
 function useTextFileView(
   location: PluginFileLocation,
 ): [TextFileView, (view: TextFileView) => void] {
-  const lineTarget = location.lineStart ? location.revision : null;
-  const [view, setView] = useState<TextFileView>(lineTarget === null ? "preview" : "source");
-  const [shownLineTarget, setShownLineTarget] = useState(lineTarget);
-  if (lineTarget !== null && lineTarget !== shownLineTarget) {
-    setShownLineTarget(lineTarget);
-    setView("source");
+  const navigationTarget = location.lineStart || location.anchor ? location.revision : null;
+  const [view, setView] = useState<TextFileView>(location.lineStart ? "source" : "preview");
+  const [shownTarget, setShownTarget] = useState(navigationTarget);
+  if (navigationTarget !== null && navigationTarget !== shownTarget) {
+    setShownTarget(navigationTarget);
+    setView(location.lineStart ? "source" : "preview");
   }
   return [view, setView];
 }

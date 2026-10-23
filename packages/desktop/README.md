@@ -10,7 +10,7 @@ and **Quit Paseo**.
 
 ### Account quotas
 
-The board shows account quotas above tasks. It reads `magpie.snapshot` through
+The board shows account quotas below tasks. Accounts shared by several hosts appear once, using the latest valid reading. It reads `magpie.snapshot` through
 each connected host's existing Paseo client; it does not access a local Magpie
 endpoint or copy provider credentials. Hosts are queried independently every
 minute, including while the final window is hidden. One failed host does not
@@ -38,6 +38,8 @@ Composer actions invoke the remote plugin over the existing connection and updat
 the query cache from the reply. Changes require an explicit click; opening a menu
 never changes routing. Pending, success and failure appear inside the menu.
 The menu-bar board keeps only quota readings and refresh actions.
+
+Settings → Appearance → Menu bar quota selects the account and whether the icon shows its remaining percentage, used percentage, or no quota number. Automatic selection prefers Codex. Cached readings have a `~` prefix; missing readings show `—%`.
 
 The icon summarizes unarchived tasks across local and remote hosts:
 

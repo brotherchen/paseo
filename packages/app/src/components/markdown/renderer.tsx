@@ -80,7 +80,7 @@ const MarkdownPart = memo(function MarkdownPart({
   });
   const [image, setImage] = useState<ImageLightboxSource | null>(null);
   const pressLink = useStableEvent(({ url, sourceType }: LinkPressEvent) => {
-    if (onNavigateLink?.(url)) return;
+    if (sourceType === "markdown" && onNavigateLink?.(url)) return;
     const source = linkSource(url, sourceType);
     if (onLinkPress && !actions.canResolveFile(source)) onLinkPress(url);
     else actions.open(source, "preferred");

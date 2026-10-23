@@ -111,7 +111,7 @@ app.whenReady().then(() => {
       ],
     };
     await page.evaluate((value) => window.paseoDesktop.menuBar.update(value), snapshot);
-    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "! 1  ▶ 2  ✓ 1  ?");
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "—%  ! 1  ▶ 2  ✓ 1  ?");
     await assert.rejects(page.evaluate(() => window.paseoDesktop.menuBar.update({ running: -1 })));
     // A webview or another unregistered window cannot overwrite status.
     const rejected = await desktop.evaluate(async ({ BrowserWindow }) => {
@@ -148,7 +148,7 @@ app.whenReady().then(() => {
       ...snapshot,
       running: 0,
     });
-    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "! 1  ✓ 1  ?");
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "—%  ! 1  ✓ 1  ?");
     assert.equal(
       await desktop.evaluate(({ BrowserWindow }) =>
         BrowserWindow.getAllWindows()[0].webContents.getBackgroundThrottling(),
@@ -198,7 +198,7 @@ app.whenReady().then(() => {
       true,
     );
     await page.reload();
-    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "?");
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "—%  ?");
     await page.evaluate((value) => window.paseoDesktop.menuBar.update(value), snapshot);
     // Two windows report the same directory, not two copies of each task.
     await desktop.evaluate(async ({ BrowserWindow }) => {
@@ -206,9 +206,9 @@ app.whenReady().then(() => {
       global.menuBar.attach(second);
       second.close();
     });
-    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "! 1  ▶ 2  ✓ 1  ?");
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "—%  ! 1  ▶ 2  ✓ 1  ?");
     await desktop.evaluate(({ powerMonitor }) => powerMonitor.emit("resume"));
-    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "?");
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "—%  ?");
     const boardSnapshot = {
       ...snapshot,
       running: 1,
@@ -304,6 +304,25 @@ app.whenReady().then(() => {
       ...boardSnapshot,
       quotaReports: [quotaReport],
     });
+    assert.equal(await desktop.evaluate(() => global.tray.getTitle()), "18%  ! 2  ▶ 1  ✓ 1  ?");
+    for (const [display, expected] of [
+      ["used", "82%  ! 2  ▶ 1  ✓ 1  ?"],
+      ["hidden", "! 2  ▶ 1  ✓ 1  ?"],
+      ["remaining", "18%  ! 2  ▶ 1  ✓ 1  ?"],
+    ]) {
+      await page.evaluate((value) => window.paseoDesktop.menuBar.update(value), {
+        ...boardSnapshot,
+        quotaReports: [quotaReport],
+        quotaPreference: { accountId: null, display },
+      });
+      assert.equal(await desktop.evaluate(() => global.tray.getTitle()), expected);
+    }
+    assert.deepEqual(
+      await board
+        .locator("main > section")
+        .evaluateAll((sections) => sections.map((section) => section.id)),
+      ["section-running", "section-finished", "section-failed", "section-quotas"],
+    );
     await expect(board.locator("#section-quotas")).toContainText("剩余 18%");
     await expect(board.locator("#section-quotas")).not.toContainText("person@example.com");
     await expect(board.locator("#section-quotas progress")).toHaveAttribute("value", "18");

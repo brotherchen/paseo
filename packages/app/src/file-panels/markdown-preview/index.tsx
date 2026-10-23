@@ -51,7 +51,10 @@ export function FileMarkdownPreview({
       second = requestAnimationFrame(() => scrollToHeading(previewId, anchor));
     });
     let second = 0;
-    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); };
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
   }, [anchor, navigationRevision, previewId, source]);
   const document = useMemo(() => parseMarkdownPreviewDocument(source), [source]);
   const environment = useAssistantFileLinkEnvironment();

@@ -1349,7 +1349,12 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
       if (!item || !isSectionAvailable(item, isDesktopApp)) return null;
       switch (view.section) {
         case "appearance":
-          return <><MenuBarQuotaSection /><AppearanceSection /></>;
+          return (
+            <>
+              <MenuBarQuotaSection />
+              <AppearanceSection />
+            </>
+          );
         case "general":
           return (
             <>
